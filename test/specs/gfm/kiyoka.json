@@ -1,0 +1,20 @@
+[
+  {
+    "section": "[code block] ok",
+    "html": "<ol><li>abc<pre><code class=\"language-ruby\">a b</code></pre></li></ol>",
+    "markdown": "1. abc\n```ruby\na\nb\n```",
+    "example": 710
+  },
+  {
+    "section": "[code block] ok",
+    "html": "<ol><li>abc</li></ol><pre><code class=\"language-ruby\">a b</code></pre>",
+    "markdown": "1. abc\n\n```ruby\na\n\nb\n```\n",
+    "example": 711
+  },
+  {
+    "section": "[code block] bug repro",
+    "html": "<ol><li>abc ```ruby a</li></ol><p>b</p><pre><code></code></pre>",
+    "markdown": "1. abc\n```ruby\na\n\nb\n```\n",
+    "example": 712
+  }
+]
