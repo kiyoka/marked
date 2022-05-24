@@ -226,41 +226,67 @@ export class Tokenizer {
         if (!endEarly) {
           const nextBulletRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:[*+-]|\\d{1,9}[.)])((?: [^\\n]*)?(?:\\n|$))`);
           const hrRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`);
+          const fencesRegExp = new RegExp('^```');
 
-          // Check if following lines should be included in List Item
-          while (src) {
-            rawLine = src.split('\n', 1)[0];
-            line = rawLine;
+          // Check if fences begin
+          if (fencesRegExp.test(src)) {
+            let endOfFences = false;
+            let lineno = 0;
+            while (src) {
+              rawLine = src.split('\n', 1)[0];
+              line = rawLine;
 
-            // Re-align to follow commonmark nesting rules
-            if (this.options.pedantic) {
-              line = line.replace(/^ {1,4}(?=( {4})*[^ ])/g, '  ');
-            }
+              if (endOfFences) {
+                break;
+              }
 
-            // End list item if found start of new bullet
-            if (nextBulletRegex.test(line)) {
-              break;
-            }
+              if (fencesRegExp.test(line) && (0 < lineno)) {
+                endOfFences = true;
+                list.loose = false;
+              }
 
-            // Horizontal rule found
-            if (hrRegex.test(src)) {
-              break;
-            }
-
-            if (line.search(/[^ ]/) >= indent || !line.trim()) { // Dedent if possible
-              itemContents += '\n' + line.slice(indent);
-            } else if (!blankLine) { // Until blank line, item doesn't need indentation
               itemContents += '\n' + line;
-            } else { // Otherwise, improper indentation ends this item
-              break;
+              raw += rawLine + '\n';
+              src = src.substring(rawLine.length + 1);
+              lineno += 1;
             }
+          }
+          else {
+            // Check if following lines should be included in List Item
+            while (src) {
+              rawLine = src.split('\n', 1)[0];
+              line = rawLine;
 
-            if (!blankLine && !line.trim()) { // Check if current line is blank
-              blankLine = true;
+              // Re-align to follow commonmark nesting rules
+              if (this.options.pedantic) {
+                line = line.replace(/^ {1,4}(?=( {4})*[^ ])/g, '  ');
+              }
+
+              // End list item if found start of new bullet
+              if (nextBulletRegex.test(line)) {
+                break;
+              }
+
+              // Horizontal rule found
+              if (hrRegex.test(src)) {
+                break;
+              }
+
+              if (line.search(/[^ ]/) >= indent || !line.trim()) { // Dedent if possible
+                itemContents += '\n' + line.slice(indent);
+              } else if (!blankLine) { // Until blank line, item doesn't need indentation
+                itemContents += '\n' + line;
+              } else { // Otherwise, improper indentation ends this item
+                break;
+              }
+
+              if (!blankLine && !line.trim()) { // Check if current line is blank
+                blankLine = true;
+              }
+
+              raw += rawLine + '\n';
+              src = src.substring(rawLine.length + 1);
             }
-
-            raw += rawLine + '\n';
-            src = src.substring(rawLine.length + 1);
           }
         }
 
