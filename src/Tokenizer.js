@@ -226,34 +226,29 @@ export class Tokenizer {
         if (!endEarly) {
           const nextBulletRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:[*+-]|\\d{1,9}[.)])((?: [^\\n]*)?(?:\\n|$))`);
           const hrRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`);
-          const fencesRegExp = new RegExp('^```');
+          const fencesBeginRegExp = new RegExp('^(```|~~~)');
 
-          // Check if fences begin
-          if (fencesRegExp.test(src)) {
-            let endOfFences = false;
-            let lineno = 0;
-            while (src) {
-              rawLine = src.split('\n', 1)[0];
-              line = rawLine;
-
-              if (endOfFences) {
-                break;
+          // Check if following lines should be included in List Item
+          while (src) {
+            // Check if fenced code block
+            if (fencesBeginRegExp.test(src)) {
+              const fencesEndRegExp = new RegExp('(```|~~~)[\s\n]*$');
+              let fenceCap = this.rules.block.fences.exec(src);
+              let rawText = fenceCap[0];
+              let beginText = fenceCap[1];
+              itemContents += '\n' + rawText;
+              raw += rawText + '\n';
+              src = src.substring(rawText.length + 1);
+              if (!fencesEndRegExp.test(rawText)) {
+                if (/```/.test(beginText)) {
+                  itemContents += '\n```';
+                }
+                else {
+                  itemContents += '\n~~~';
+                }
               }
-
-              if (fencesRegExp.test(line) && (0 < lineno)) {
-                endOfFences = true;
-                list.loose = false;
-              }
-
-              itemContents += '\n' + line;
-              raw += rawLine + '\n';
-              src = src.substring(rawLine.length + 1);
-              lineno += 1;
             }
-          }
-          else {
-            // Check if following lines should be included in List Item
-            while (src) {
+            else {
               rawLine = src.split('\n', 1)[0];
               line = rawLine;
 
